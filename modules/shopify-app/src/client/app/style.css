@@ -1,0 +1,9 @@
+.backup_item__title {
+  max-width: 400px;
+}
+
+@media (max-width: 1024px) {
+  .backup_item__title {
+    max-width: 200px;
+  }
+}

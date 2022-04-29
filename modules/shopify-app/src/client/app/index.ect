@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Shopify Embedded App</title>
+    <script>
+      var API_KEY = <%- JSON.stringify(@shopifyApiKey) %>;
+      var API_HOST = <%- JSON.stringify(@host) %>;
+      var HOST_BASE64 = <%- JSON.stringify(@hostBase64) %>;
+      var STORE = <%- JSON.stringify(@store) %>;
+    </script>
+  </head>
+  <body style="overflow-y: scroll;">
+    <div id="app"></div>
+  </body>
+</html>
