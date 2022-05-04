@@ -193,7 +193,6 @@ export default {
             }
           }
         }
-
       }
 
       axios.post('https://plus.teezily.com/api/v1/orders.json', order_Teezily, {
@@ -206,10 +205,6 @@ export default {
         .catch((error) => {
           console.log(error)
         })
-
-
-
-
       const orderShopify = new OrderShopify({ __store: req.__store })
       await orderShopify.updateOrders2Db([ req.body ])
       res.sendStatus(StatusCodes.OK)
