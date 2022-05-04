@@ -119,92 +119,99 @@ export default {
   async orderShopifyCreated(req, res) {
     try {
       const headers = {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer 35aa29c2-c298-497d-9007-651ee3870cab',
+        'Authorization': 'Bearer 4fc3dddd-97ff-437f-a4a8-4feece4bef5d',
         'Content-Type': 'application/json'
       }
-      const line_items = req.body.line_items
 
-      const url_frontdesign = line_items.properties.filter( prop => prop.name === '_customily-production-url')
-      const productReq_Teezily = {
-        name: line_items.name,
-        prototype_id: line_items.properties.prototype_id,
-        style_id: line_items.properties.style_id,
-        color_id: line_items.properties.color_id,
-        front_design: {
-          remote_picture_url: url_frontdesign
+      const line_items = req.body.line_items[0]
+
+      let url_frontdesign = ''
+      let style_id = ''
+      let color_id = ''
+      let prototype_id = ''
+      let size_id = ''
+      // console.log('line_items.properties', typeof(line_items.properties), line_items.properties)
+      for (let i = 0; i < line_items.properties.length; i++) {
+        if (line_items.properties[i].name === '_customily-production-url') {
+          url_frontdesign = line_items.properties[i].value
+        }
+        if (line_items.properties[i].name === 'style_id') {
+          style_id = line_items.properties[i].value
+        }
+        if (line_items.properties[i].name === 'color_id') {
+          color_id = line_items.properties[i].value
+        }
+        if (line_items.properties[i].name === 'prototype_id') {
+          prototype_id = line_items.properties[i].value
+        }
+        if (line_items.properties[i].name === 'size_id') {
+          size_id = line_items.properties[i].value
         }
       }
+      if (style_id !== '' &&
+        color_id !== '' &&
+        prototype_id !== '' &&
+        size_id !== ''
+      ) {
 
-      let TeezilyNewProductID = ''
-
-      axios.post('https://plus.teezily.com/api/v1/products.json', productReq_Teezily, {
-        headers
-      })
-        // eslint-disable-next-line promise/always-return
-        .then((response) => {
-          console.log(response)
-          TeezilyNewProductID = response.products[0].id
-        })
-        .catch((error) => {
-          console.log(error)
-        })
-
-      const customer = req.body.customer
-      const billing_address = req.body.billing_address
-      const shipping_address = req.body.shipping_address
-      const order_Teezily = {
-        email: customer.email,
-        first_name: customer.first_name,
-        last_name: customer.last_name,
-        shipping_address: {
-          address: shipping_address.address,
-          zipcode: shipping_address.zip,
-          city: shipping_address.city,
-          province_code: shipping_address.province_code,
-          country_code: shipping_address.country_code,
-          first_name: shipping_address.first_name,
-          last_name: shipping_address.last_name,
-        },
-        billing_address: {
-          address: billing_address.address,
-          zipcode: billing_address.zip,
-          city: billing_address.city,
-          province_code: billing_address.province_code,
-          country_code: billing_address.country_code,
-          first_name: billing_address.first_name,
-          last_name: billing_address.last_name,
-        },
-        line_items: {
-          prototype_id: line_items.properties.prototype_id,
-          color_id: line_items.properties.color_id,
-          size_id: line_items.properties.size_id,
-          quantity: line_items.quantity,
-          product_id: TeezilyNewProductID,
-          product: {
-            name: line_items.name,
-            style_id: line_items.properties.style_id,
-            front_design: {
-              remote_picture_url: url_frontdesign,
-              position_x: 0,
-              position_y: 0,
-              width: 100,
-              height: 100
+        const customer = req.body.customer
+        const billing_address = req.body.billing_address
+        const shipping_address = req.body.shipping_address
+        const order_Teezily = {
+          email: customer.email,
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+          shipping_address: {
+            address: shipping_address.city,
+            zipcode: shipping_address.zip,
+            city: shipping_address.city,
+            province_code: shipping_address.province_code,
+            country_code: shipping_address.country_code,
+            first_name: shipping_address.first_name,
+            last_name: shipping_address.last_name,
+          },
+          billing_address: {
+            address: billing_address.city,
+            zipcode: billing_address.zip,
+            city: billing_address.city,
+            province_code: billing_address.province_code,
+            country_code: billing_address.country_code,
+            first_name: billing_address.first_name,
+            last_name: billing_address.last_name,
+          },
+          line_items: [ {
+            prototype_id,
+            color_id,
+            size_id,
+            style_id,
+            quantity: line_items.quantity,
+            product: {
+              name: line_items.name,
+              style_id,
+              front_design: {
+                remote_picture_url: url_frontdesign,
+                position_x: 0,
+                position_y: 0,
+                width: 100,
+                height: 100
+              }
             }
-          }
+          } ]
         }
+        console.log('order_Teezily', order_Teezily)
+
+        axios.post('https://plus.teezily.com/api/v1/orders.json', order_Teezily, {
+          headers
+        })
+          // eslint-disable-next-line promise/always-return
+          .then((response) => {
+            console.log(response.data)
+          })
+          .catch((error) => {
+            console.log(error)
+          })
       }
 
-      axios.post('https://plus.teezily.com/api/v1/orders.json', order_Teezily, {
-        headers
-      })
-        // eslint-disable-next-line promise/always-return
-        .then((response) => {
-          console.log(response)
-        })
-        .catch((error) => {
-          console.log(error)
-        })
       const orderShopify = new OrderShopify({ __store: req.__store })
       await orderShopify.updateOrders2Db([ req.body ])
       res.sendStatus(StatusCodes.OK)
