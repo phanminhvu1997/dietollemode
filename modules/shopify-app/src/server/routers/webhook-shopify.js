@@ -8,7 +8,7 @@ webhookRouter.get('/register', shopifyWebhook.registerWhShopify)
 webhookRouter.get('/remove', shopifyWebhook.removeWhShopify)
 
 // middleware that is specific to this router
-webhookRouter.use(verifyShopifyWebhook)
+// webhookRouter.use(verifyShopifyWebhook)
 
 webhookRouter.post(
   '/products/created',

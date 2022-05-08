@@ -4,7 +4,6 @@ import * as config from '../services/constant'
 import getRechargeClient from '../services/recharge'
 import SubscriptionRecharge from '../infastructure/recharge/SubscriptionRecharge'
 import OrderRecharge from '../infastructure/recharge/OrderRecharge'
-
 export default {
   async registerWhRecharge(req, res) {
     try {

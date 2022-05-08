@@ -1,11 +1,13 @@
 import { StatusCodes } from 'http-status-codes'
-import axios from 'axios'
+
 import * as config from '../services/constant'
 import ProductShopify from '../infastructure/shopify/ProductShopify'
 import OrderShopify from '../infastructure/shopify/OrderShopify'
 import StoreModel from '../models/store'
+import OrderTeezilyModel from '../models/TeezilyOrder'
 import CustomerShopify from '../infastructure/shopify/CustomerShopify'
 
+import fetch from 'node-fetch'
 
 export default {
   async registerWhShopify(req, res) {
@@ -117,11 +119,25 @@ export default {
   },
 
   async orderShopifyCreated(req, res) {
+    // console.log('orderShopifyCreated')
+    //
+    // return res.sendStatus(200)
+
+
+    const OrderDb = await OrderTeezilyModel.find().lean()
+
+    const checkDb = OrderDb.filter( order => order.shopify_order_id === req.body.id && order.status === 'done')
+    console.log(checkDb)
+    if (checkDb.length > 0 ) {
+      res.sendStatus(StatusCodes.OK)
+      return ''
+    } else {
+      res.sendStatus(StatusCodes.BAD_GATEWAY)
+    }
+    // TODO if there is an in-progress order in DB, return 500
+    // TODO if there is completed order in DB, return 200
+
     try {
-      const headers = {
-        'Authorization': 'Bearer 4fc3dddd-97ff-437f-a4a8-4feece4bef5d',
-        'Content-Type': 'application/json'
-      }
 
       const line_items = req.body.line_items[0]
 
@@ -130,7 +146,7 @@ export default {
       let color_id = ''
       let prototype_id = ''
       let size_id = ''
-      // console.log('line_items.properties', typeof(line_items.properties), line_items.properties)
+
       for (let i = 0; i < line_items.properties.length; i++) {
         if (line_items.properties[i].name === '_customily-production-url') {
           url_frontdesign = line_items.properties[i].value
@@ -148,7 +164,7 @@ export default {
           size_id = line_items.properties[i].value
         }
       }
-      if (style_id !== '' &&
+      if (   style_id !== '' &&
         color_id !== '' &&
         prototype_id !== '' &&
         size_id !== ''
@@ -198,22 +214,44 @@ export default {
             }
           } ]
         }
-        console.log('order_Teezily', order_Teezily)
+        const url = process.env.POST_ORDER_URL
 
-        axios.post('https://plus.teezily.com/api/v1/orders.json', order_Teezily, {
-          headers
+        console.log('xxx')
+        // const dummy = ' {"email":"phanminhvu19222222297@gmail.com","first_name":"phan V","last_name":"t","shipping_address":{"address":"Buxtehude","zipcode":"21614","city":"Buxtehude","province_code":null,"country_code":"DE","first_name":"test t","last_name":"test"},"billing_address":{"address":"Buxtehude","zipcode":"21614","city":"Buxtehude","province_code":null,"country_code":"DE","first_name":"test t","last_name":"test"},"line_items":[{"prototype_id":"12","color_id":"13","size_id":"1","style_id":"1","quantity":1,"product":{"name":"Omasaurus, Mamasaurus - Personalisierte Kleidung, Geschenke für Oma, Mama - 0009A010A - T-Shirt / Weißes T-Shirt / S","style_id":"1","front_design":{"remote_picture_url":"https://cdn.customily.com/ExportFile/vanminhle881993/f31f565f-7ed3-4eab-9305-44c280387767.png","position_x":0,"position_y":0,"width":100,"height":100}}}]}'
+        // const dummy_order = { 'email': 'phanminhvu19222222297@gmail.com', 'first_name': 'phan V', 'last_name': 't', 'shipping_address': { 'address': 'Buxtehude', 'zipcode': '21614', 'city': 'Buxtehude', 'province_code': null, 'country_code': 'DE', 'first_name': 'test t', 'last_name': 'test' }, 'billing_address': { 'address': 'Buxtehude', 'zipcode': '21614', 'city': 'Buxtehude', 'province_code': null, 'country_code': 'DE', 'first_name': 'test t', 'last_name': 'test' }, 'line_items': [ { 'prototype_id': '12', 'color_id': '13', 'size_id': '1', 'style_id': '1', 'quantity': 1, 'product': { 'name': 'Omasaurus, Mamasaurus - Personalisierte Kleidung, Geschenke für Oma, Mama - 0009A010A - T-Shirt / Weißes T-Shirt / S', 'style_id': '1', 'front_design': { 'remote_picture_url': 'https://cdn.customily.com/ExportFile/vanminhle881993/f31f565f-7ed3-4eab-9305-44c280387767.png', 'position_x': 0, 'position_y': 0, 'width': 100, 'height': 100 } } } ] }
+        // TODO store in-progress order into DB
+        const store_order =  await OrderTeezilyModel.create({
+          shopify_order_id: req.body.id,
+          status: 'processing'
         })
-          // eslint-disable-next-line promise/always-return
-          .then((response) => {
-            console.log(response.data)
-          })
-          .catch((error) => {
-            console.log(error)
-          })
+
+        // console.log('order_Teezily', JSON.stringify(order_Teezily))
+        console.log('store_order', store_order)
+
+        const response = await fetch( url, {
+          method: 'POST',
+          // body: JSON.stringify(order_Teezily),
+          body: JSON.stringify(order_Teezily),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: process.env.TEEZILY_TOKEN }
+        })
+
+        console.log('response', response.status)
+        if (response.status === 201) {
+          const updateOrder = await OrderTeezilyModel.update({ shopify_order_id: req.body.id }, { shopify_order_id: req.body.id,
+            status: 'done' })
+          console.log('updateOrder', updateOrder)
+        } else {
+          const deleteOrder =await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id } )
+          console.log('deleteOrder', deleteOrder)
+        }
+        // TODO if ok, update the in-progress order to completed
+        // TODO if ng, delete order
+
       }
 
-      const orderShopify = new OrderShopify({ __store: req.__store })
-      await orderShopify.updateOrders2Db([ req.body ])
+      console.log('yyy')
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyCreated: ', error)
@@ -249,10 +287,10 @@ export default {
       const customerShopify = new CustomerShopify({ __store: req.__store })
       await customerShopify.updateCustomers2Db([ req.body ])
 
-      res.sendStatus(StatusCodes.OK)
+      // res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('customerShopifyUpdated: ', error)
-      res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
+      // res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
     }
   },
 

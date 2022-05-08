@@ -26,7 +26,7 @@ const verifyShopifyWebhook = async (req, res, next) => {
     )
 
     if (!verified) {
-     // return res.sendStatus(FORBIDDEN)
+      // return res.sendStatus(FORBIDDEN)
     }
 
     next()

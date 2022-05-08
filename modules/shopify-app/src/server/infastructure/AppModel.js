@@ -8,6 +8,7 @@ import OrderShopifyModel from '../models/order-shopify'
 import RulesetModel from '../models/ruleset'
 import OrderRechargeModel from '../models/order-recharge'
 import CustomerShopifyModel from '../models/customer-shopify'
+import OrderTeezilyModel from '../models/TeezilyOrder'
 
 class AppModel {
   constructor({ __store }) {
@@ -19,6 +20,7 @@ class AppModel {
     this.SubscriptionModel = SubscriptionModel
     this.ProductShopifyModel = ProductShopifyModel
     this.OrderShopifyModel = OrderShopifyModel
+    this.OrderTeezilyModel =OrderTeezilyModel
     this.OrderRechargeModel = OrderRechargeModel
     this.RulesetModel = RulesetModel
     this.CustomerShopifyModel = CustomerShopifyModel
