@@ -206,16 +206,16 @@ export default {
           console.log('error ' + error)
         })
 
-      let orders_need_to_change = []
+      let orders_need_to_fullfill = []
 
       Teezily_fullfilled_orderArr.forEach(teezily_fullfilled_order => {
         const order = shopify_unfullfilled_order.filter(shopify_order => shopify_order.id.toString() === teezily_fullfilled_order.order_seller_id.toString())
-        orders_need_to_change.push(order)
+        orders_need_to_fullfill.push(order)
       }
       )
 
-      for (let i = 0; i < orders_need_to_change.length; i++) {
-        const fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + orders_need_to_change[i].id + '/fulfillment_orders.json'
+      for (let i = 0; i < orders_need_to_fullfill.length; i++) {
+        const fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + orders_need_to_fullfill[i].id + '/fulfillment_orders.json'
         let line_items_by_fulfillment_order = []
         const fulfillment_orders_call = await axios.get(fulfillment_orders_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
           .then(response => {
