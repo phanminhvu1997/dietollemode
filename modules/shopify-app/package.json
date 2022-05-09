@@ -12,6 +12,7 @@
     "@shopify/app-bridge-utils": "2.0.5",
     "@shopify/polaris": "5.12.0",
     "@shopify/polaris-icons": "4.1.0",
+    "@shopify/shopify-api": "^3.0.1",
     "antd": "4.16.13",
     "body-parser": "1.19.0",
     "cors": "2.8.5",

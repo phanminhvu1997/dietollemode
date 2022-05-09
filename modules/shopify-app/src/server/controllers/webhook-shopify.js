@@ -1,4 +1,4 @@
-import { StatusCodes } from 'http-status-codes'
+import {StatusCodes} from 'http-status-codes'
 
 import * as config from '../services/constant'
 import ProductShopify from '../infastructure/shopify/ProductShopify'
@@ -19,22 +19,22 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({ __store: store })
+      const appModel = new ProductShopify({__store: store})
 
       const webhooks = [
-        { topic: 'orders/create', address: '/orders/created' },
-        { topic: 'orders/updated', address: '/orders/updated' },
-        { topic: 'products/create', address: '/products/created' },
-        { topic: 'products/update', address: '/products/updated' },
-        { topic: 'products/delete', address: '/products/deleted' },
-        { topic: 'customers/create', address: '/customers/created' },
-        { topic: 'customers/update', address: '/customers/updated' },
-        { topic: 'customers/delete', address: '/customers/deleted' },
+        {topic: 'orders/create', address: '/orders/created'},
+        {topic: 'orders/updated', address: '/orders/updated'},
+        {topic: 'products/create', address: '/products/created'},
+        {topic: 'products/update', address: '/products/updated'},
+        {topic: 'products/delete', address: '/products/deleted'},
+        {topic: 'customers/create', address: '/customers/created'},
+        {topic: 'customers/update', address: '/customers/updated'},
+        {topic: 'customers/delete', address: '/customers/deleted'},
 
       ]
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const { id } of registedWebhooks) {
+      for (const {id} of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -63,11 +63,11 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({ __store: store })
+      const appModel = new ProductShopify({__store: store})
 
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const { id } of registedWebhooks) {
+      for (const {id} of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -80,8 +80,8 @@ export default {
 
   async productShopifyCreated(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
-      await productShopify.updateProducts2Db([ req.body ])
+      const productShopify = new ProductShopify({__store: req.__store})
+      await productShopify.updateProducts2Db([req.body])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -92,8 +92,8 @@ export default {
 
   async productShopifyUpdated(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
-      await productShopify.updateProducts2Db([ req.body ])
+      const productShopify = new ProductShopify({__store: req.__store})
+      await productShopify.updateProducts2Db([req.body])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -104,7 +104,7 @@ export default {
 
   async productShopifyDeleted(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
+      const productShopify = new ProductShopify({__store: req.__store})
       await productShopify.ProductShopifyModel.findOneAndDelete({
         id: req.body.id,
       })
@@ -118,17 +118,14 @@ export default {
     }
   },
 
-  async orderShopifyCreated(req, res) {
-    // console.log('orderShopifyCreated')
-    //
-    // return res.sendStatus(200)
 
+  async orderShopifyCreated(req, res) {
 
     const OrderDb = await OrderTeezilyModel.find().lean()
 
-    const checkDb = OrderDb.filter( order => order.shopify_order_id === req.body.id && order.status === 'done')
+    const checkDb = OrderDb.filter(order => order.shopify_order_id === req.body.id && order.status === 'done')
     console.log(checkDb)
-    if (checkDb.length > 0 ) {
+    if (checkDb.length > 0) {
       res.sendStatus(StatusCodes.OK)
       return ''
     } else {
@@ -164,7 +161,7 @@ export default {
           size_id = line_items.properties[i].value
         }
       }
-      if (   style_id !== '' &&
+      if (style_id !== '' &&
         color_id !== '' &&
         prototype_id !== '' &&
         size_id !== ''
@@ -177,6 +174,7 @@ export default {
           email: customer.email,
           first_name: customer.first_name,
           last_name: customer.last_name,
+          order_seller_id: req.body.id,
           shipping_address: {
             address: shipping_address.city,
             zipcode: shipping_address.zip,
@@ -195,7 +193,8 @@ export default {
             first_name: billing_address.first_name,
             last_name: billing_address.last_name,
           },
-          line_items: [ {
+          line_items: [{
+
             prototype_id,
             color_id,
             size_id,
@@ -212,38 +211,36 @@ export default {
                 height: 100
               }
             }
-          } ]
+          }]
         }
         const url = process.env.POST_ORDER_URL
 
-        console.log('xxx')
-        // const dummy = ' {"email":"phanminhvu19222222297@gmail.com","first_name":"phan V","last_name":"t","shipping_address":{"address":"Buxtehude","zipcode":"21614","city":"Buxtehude","province_code":null,"country_code":"DE","first_name":"test t","last_name":"test"},"billing_address":{"address":"Buxtehude","zipcode":"21614","city":"Buxtehude","province_code":null,"country_code":"DE","first_name":"test t","last_name":"test"},"line_items":[{"prototype_id":"12","color_id":"13","size_id":"1","style_id":"1","quantity":1,"product":{"name":"Omasaurus, Mamasaurus - Personalisierte Kleidung, Geschenke für Oma, Mama - 0009A010A - T-Shirt / Weißes T-Shirt / S","style_id":"1","front_design":{"remote_picture_url":"https://cdn.customily.com/ExportFile/vanminhle881993/f31f565f-7ed3-4eab-9305-44c280387767.png","position_x":0,"position_y":0,"width":100,"height":100}}}]}'
-        // const dummy_order = { 'email': 'phanminhvu19222222297@gmail.com', 'first_name': 'phan V', 'last_name': 't', 'shipping_address': { 'address': 'Buxtehude', 'zipcode': '21614', 'city': 'Buxtehude', 'province_code': null, 'country_code': 'DE', 'first_name': 'test t', 'last_name': 'test' }, 'billing_address': { 'address': 'Buxtehude', 'zipcode': '21614', 'city': 'Buxtehude', 'province_code': null, 'country_code': 'DE', 'first_name': 'test t', 'last_name': 'test' }, 'line_items': [ { 'prototype_id': '12', 'color_id': '13', 'size_id': '1', 'style_id': '1', 'quantity': 1, 'product': { 'name': 'Omasaurus, Mamasaurus - Personalisierte Kleidung, Geschenke für Oma, Mama - 0009A010A - T-Shirt / Weißes T-Shirt / S', 'style_id': '1', 'front_design': { 'remote_picture_url': 'https://cdn.customily.com/ExportFile/vanminhle881993/f31f565f-7ed3-4eab-9305-44c280387767.png', 'position_x': 0, 'position_y': 0, 'width': 100, 'height': 100 } } } ] }
         // TODO store in-progress order into DB
-        const store_order =  await OrderTeezilyModel.create({
+        const store_order = await OrderTeezilyModel.create({
           shopify_order_id: req.body.id,
           status: 'processing'
         })
 
-        // console.log('order_Teezily', JSON.stringify(order_Teezily))
         console.log('store_order', store_order)
 
-        const response = await fetch( url, {
+        const response = await fetch(url, {
           method: 'POST',
-          // body: JSON.stringify(order_Teezily),
           body: JSON.stringify(order_Teezily),
           headers: {
             'Content-Type': 'application/json',
-            Authorization: process.env.TEEZILY_TOKEN }
+            Authorization: process.env.TEEZILY_TOKEN
+          }
         })
 
         console.log('response', response.status)
         if (response.status === 201) {
-          const updateOrder = await OrderTeezilyModel.update({ shopify_order_id: req.body.id }, { shopify_order_id: req.body.id,
-            status: 'done' })
+          const updateOrder = await OrderTeezilyModel.update({shopify_order_id: req.body.id}, {
+            shopify_order_id: req.body.id,
+            status: 'done'
+          })
           console.log('updateOrder', updateOrder)
         } else {
-          const deleteOrder =await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id } )
+          const deleteOrder = await OrderTeezilyModel.deleteOne({shopify_order_id: req.body.id})
           console.log('deleteOrder', deleteOrder)
         }
         // TODO if ok, update the in-progress order to completed
@@ -251,7 +248,6 @@ export default {
 
       }
 
-      console.log('yyy')
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyCreated: ', error)
@@ -261,8 +257,8 @@ export default {
 
   async orderShopifyUpdated(req, res) {
     try {
-      const orderShopify = new OrderShopify({ __store: req.__store })
-      await orderShopify.updateOrders2Db([ req.body ])
+      const orderShopify = new OrderShopify({__store: req.__store})
+      await orderShopify.updateOrders2Db([req.body])
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyUpdated: ', error)
@@ -272,8 +268,8 @@ export default {
 
   async customerShopifyCreated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
-      await customerShopify.updateCustomers2Db([ req.body ])
+      const customerShopify = new CustomerShopify({__store: req.__store})
+      await customerShopify.updateCustomers2Db([req.body])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -284,8 +280,8 @@ export default {
 
   async customerShopifyUpdated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
-      await customerShopify.updateCustomers2Db([ req.body ])
+      const customerShopify = new CustomerShopify({__store: req.__store})
+      await customerShopify.updateCustomers2Db([req.body])
 
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -296,7 +292,7 @@ export default {
 
   async customerShopifyDeleted(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
+      const customerShopify = new CustomerShopify({__store: req.__store})
       await customerShopify.CustomerShopifyModel.findOneAndDelete({
         id: req.body.id,
       })
