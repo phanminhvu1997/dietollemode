@@ -188,11 +188,10 @@ export default {
         order_status: 'unfullfiled'
       }).lean()
 
-      console.log('Order_Unfullfilled_Db', Order_Unfullfilled_Db)
-      console.log('before loop')
+
       for (let i=0; i< Order_Unfullfilled_Db.length; i++) {
         const teezily_url = 'https://plus.teezily.com/api/v1/orders/'+ Order_Unfullfilled_Db[i].teezily_order_id +'.json'
-        console.log('Order_Unfullfilled_Db_loop', Order_Unfullfilled_Db[i])
+
         await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
             teezily_order = response.data.orders[0]

@@ -217,7 +217,6 @@ export default {
           teezily_order_id: '',
           order_status: 'unfullfiled'
         })
-        console.log(store_order)
         const url = process.env.POST_ORDER_URL
         const response = await fetch(url, {
           method: 'POST',
