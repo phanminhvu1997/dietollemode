@@ -119,7 +119,6 @@ export default {
   },
 
   async orderShopifyCreated(req, res) {
-    console.log(req.body.id)
     // TODO if there is an in-progress order in DB, return 500
     // TODO if there is completed order in DB, return 200
     try {
