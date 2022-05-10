@@ -19,6 +19,7 @@ import {
 import fetch from 'node-fetch'
 import axios from 'axios'
 import Shopify from 'shopify-api-node'
+import OrderTeezilyModel from '../models/TeezilyOrder'
 
 export default {
   async migrateSubscriptionRecharge(req, res, next) {
@@ -179,74 +180,57 @@ export default {
 
   async updateOrderStatus(req, res) {
     try {
-
-      const teezily_url = process.env.POST_ORDER_URL
       let teezily_order = []
       const Teezily_token = process.env.TEEZILY_TOKEN
-
-      const teezily_call = await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
-        .then(response => {
-          teezily_order = response.data.orders
-        })
-        .catch((error) => {
-          console.log('error ' + error)
-        })
-
-      const Teezily_fullfilled_orderArr = teezily_order.filter(order => order.state === 'Done')
-
-      const shopify_order_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders.json?status=null'
       const Shopify_token = process.env.SHOPIFY_ACCESS_TOKEN
-      let shopify_unfullfilled_order = []
+      const Order_Unfullfilled_Db = await OrderTeezilyModel.find({
+        order_status: 'unfullfiled'
+      }).lean()
 
-      const shopify_call = await axios.get(shopify_order_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
-        .then(response => {
-          shopify_unfullfilled_order = response.data.orders
-        })
-        .catch((error) => {
-          console.log('error ' + error)
-        })
+      for (let i=0; i< Order_Unfullfilled_Db.length; i++) {
 
-      let orders_need_to_fullfill = []
-
-      Teezily_fullfilled_orderArr.forEach(teezily_fullfilled_order => {
-        const order = shopify_unfullfilled_order.filter(shopify_order => shopify_order.id.toString() === teezily_fullfilled_order.order_seller_id.toString())
-        orders_need_to_fullfill.push(order)
-      }
-      )
-
-      for (let i = 0; i < orders_need_to_fullfill.length; i++) {
-        const fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + orders_need_to_fullfill[i].id + '/fulfillment_orders.json'
-        let line_items_by_fulfillment_order = []
-        const fulfillment_orders_call = await axios.get(fulfillment_orders_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
+        const teezily_url = 'https://plus.teezily.com/api/v1/orders/'+ Order_Unfullfilled_Db[i].teezily_order_id +'.json'
+        await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
-            line_items_by_fulfillment_order.push({
-              'fulfillment_order_id': response.data.fulfillment_orders[0].id,
-              'fulfillment_order_line_items': [
-                {
-                  'id': response.data.fulfillment_orders[0].line_items[0].id,
-                  'quantity': response.data.fulfillment_orders[0].line_items[0].quantity
-                }
-              ]
+            teezily_order = response.data.orders[0]
+          })
+          .catch((error) => {
+            console.log('error ' + error)
+          })
+
+        if (teezily_order.state === 'Done') {
+          let line_items_by_fulfillment_order = []
+          let  fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '/fulfillment_orders.json'
+          const fulfillment_orders_call = await axios.get(fulfillment_orders_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
+            .then(response => {
+              line_items_by_fulfillment_order.push({
+                'fulfillment_order_id': response.data.fulfillment_orders[0].id,
+                'fulfillment_order_line_items': [
+                  {
+                    'id': response.data.fulfillment_orders[0].line_items[0].id,
+                    'quantity': response.data.fulfillment_orders[0].line_items[0].quantity
+                  }
+                ]
+              })
             })
-          })
 
-        const fulfillment = {
-          'fulfillment': {
-            'notify_customer': false,
-            line_items_by_fulfillment_order
+          const fulfillment = {
+            'fulfillment': {
+              'notify_customer': false,
+              line_items_by_fulfillment_order
+            }
           }
+          const fulfillments_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/fulfillments.json'
+          axios.post(fulfillments_url, fulfillment, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
+            // eslint-disable-next-line promise/always-return
+            .then((res) => {
+              console.log('RESPONSE RECEIVED: ', res)
+            })
+            .catch((err) => {
+              console.log('AXIOS ERROR: ', err)
+            })
         }
-        const fulfillments_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/fulfillments.json'
-        axios.post(fulfillments_url, fulfillment, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
-          // eslint-disable-next-line promise/always-return
-          .then((res) => {
-            console.log('RESPONSE RECEIVED: ', res)
-          })
-          .catch((err) => {
-            console.log('AXIOS ERROR: ', err)
-          })
       }
-
       res.json('Successfully')
     } catch (error) {
       console.error('updateThemePrivateKey ', error)

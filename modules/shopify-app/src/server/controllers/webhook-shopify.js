@@ -8,6 +8,7 @@ import OrderTeezilyModel from '../models/TeezilyOrder'
 import CustomerShopify from '../infastructure/shopify/CustomerShopify'
 
 import fetch from 'node-fetch'
+import axios from 'axios'
 
 export default {
   async registerWhShopify(req, res) {
@@ -208,13 +209,15 @@ export default {
             }
           } ]
         }
-        const url = process.env.POST_ORDER_URL
+
         // TODO store in-progress order into DB
         const store_order = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id,
-          status: 'processing'
+          status: 'processing',
+          teezily_order_id: '',
+          order_status: 'unfullfiled'
         })
-
+        const url = process.env.POST_ORDER_URL
         const response = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(order_Teezily),
@@ -224,10 +227,18 @@ export default {
           }
         })
 
+        if (response.ok) {
+          const data = await response.json()
+          console.log('response', data)
+        }
+
         if (response.status === 201) {
+          const data = await response.json()
           const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
             shopify_order_id: req.body.id,
-            status: 'done'
+            status: 'done',
+            teezily_order_id: data.orders[0].order_number,
+            order_status: 'unfullfiled'
           })
           console.log('updateOrder', updateOrder)
         } else {
