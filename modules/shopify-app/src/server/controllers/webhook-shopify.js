@@ -131,6 +131,7 @@ export default {
     } else {
       res.sendStatus(StatusCodes.BAD_GATEWAY)
     }
+
     // TODO if there is an in-progress order in DB, return 500
     // TODO if there is completed order in DB, return 200
 
@@ -170,6 +171,7 @@ export default {
         const customer = req.body.customer
         const billing_address = req.body.billing_address
         const shipping_address = req.body.shipping_address
+
         const order_Teezily = {
           email: customer.email,
           first_name: customer.first_name,
@@ -247,7 +249,7 @@ export default {
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
-      console.error('orderShopifyCreated: ', error)
+      // console.error('orderShopifyCreated: ', error)
       res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
     }
   },
