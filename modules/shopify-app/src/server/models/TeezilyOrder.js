@@ -9,6 +9,8 @@ const schema = new mongoose.Schema(
   {
     shopify_order_id: Number,
     status: String,
+    teezily_order_id: Number,
+    order_status: String,
     // CUSTOM PROPERTIES
     storeName: {
       type: String,

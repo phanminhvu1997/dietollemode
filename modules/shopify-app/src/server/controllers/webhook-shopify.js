@@ -211,12 +211,13 @@ export default {
         }
 
         // TODO store in-progress order into DB
-        const store_order = await OrderTeezilyModel.find({
+        const store_order = await OrderTeezilyModel.create({
           shopify_order_id: req.body.id,
           status: 'processing',
           teezily_order_id: '',
           order_status: 'unfullfiled'
         })
+        console.log(store_order)
         const url = process.env.POST_ORDER_URL
         const response = await fetch(url, {
           method: 'POST',

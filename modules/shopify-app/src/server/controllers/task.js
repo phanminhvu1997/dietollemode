@@ -183,16 +183,19 @@ export default {
       let teezily_order = []
       const Teezily_token = process.env.TEEZILY_TOKEN
       const Shopify_token = process.env.SHOPIFY_ACCESS_TOKEN
+
       const Order_Unfullfilled_Db = await OrderTeezilyModel.find({
         order_status: 'unfullfiled'
       }).lean()
 
+      console.log('Order_Unfullfilled_Db', Order_Unfullfilled_Db)
+      console.log('before loop')
       for (let i=0; i< Order_Unfullfilled_Db.length; i++) {
         const teezily_url = 'https://plus.teezily.com/api/v1/orders/'+ Order_Unfullfilled_Db[i].teezily_order_id +'.json'
+        console.log('Order_Unfullfilled_Db_loop', Order_Unfullfilled_Db[i])
         await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
             teezily_order = response.data.orders[0]
-
           })
           .catch((error) => {
             console.log('error ' + error)
@@ -230,7 +233,11 @@ export default {
               console.log('AXIOS ERROR: ', err)
             })
         }
+        const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id }, {
+          order_status: 'fullfiled'
+        })
       }
+
       res.json('Successfully')
     } catch (error) {
       console.error('updateThemePrivateKey ', error)
