@@ -252,7 +252,7 @@ export default {
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyCreated: ', error)
-      res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
+      //res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
     }
   },
 
