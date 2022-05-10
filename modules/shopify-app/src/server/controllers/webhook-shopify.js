@@ -231,6 +231,7 @@ export default {
             Authorization: process.env.TEEZILY_TOKEN
           }
         })
+        console.log('response', response)
 
         if (response.status === 201) {
           const updateOrder = await OrderTeezilyModel.update({ shopify_order_id: req.body.id }, {
