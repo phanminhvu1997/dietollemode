@@ -120,17 +120,8 @@ export default {
 
 
   async orderShopifyCreated(req, res) {
+    console.log(req.body.id)
 
-    const OrderDb = await OrderTeezilyModel.find().lean()
-
-    const checkDb = OrderDb.filter(order => order.shopify_order_id === req.body.id && order.status === 'done')
-
-    if (checkDb.length > 0) {
-      res.sendStatus(StatusCodes.OK)
-      return ''
-    } else {
-      res.sendStatus(StatusCodes.BAD_GATEWAY)
-    }
 
     // TODO if there is an in-progress order in DB, return 500
     // TODO if there is completed order in DB, return 200
@@ -167,6 +158,18 @@ export default {
         prototype_id !== '' &&
         size_id !== ''
       ) {
+        const OrderDb = await OrderTeezilyModel.find({
+          shopify_order_id: req.body.id,
+          status: 'done'
+        }).lean()
+
+        if (OrderDb.length > 0) {
+          res.sendStatus(StatusCodes.OK)
+          return ''
+        } else {
+          res.sendStatus(StatusCodes.BAD_GATEWAY)
+        }
+
         console.log('c')
         const customer = req.body.customer
         const billing_address = req.body.billing_address
@@ -218,7 +221,7 @@ export default {
         const url = process.env.POST_ORDER_URL
         console.log('d')
         // TODO store in-progress order into DB
-        const store_order = await OrderTeezilyModel.create({
+        const store_order = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id,
           status: 'processing'
         })
@@ -235,7 +238,7 @@ export default {
         console.log('response', response)
 
         if (response.status === 201) {
-          const updateOrder = await OrderTeezilyModel.update({ shopify_order_id: req.body.id }, {
+          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
             shopify_order_id: req.body.id,
             status: 'done'
           })
