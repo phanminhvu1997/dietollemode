@@ -192,7 +192,7 @@ export default {
         await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
             teezily_order = response.data.orders[0]
-            console.log(teezily_order)
+            console.log("a", teezily_order)
           })
           .catch((error) => {
             console.log('error ' + error)
