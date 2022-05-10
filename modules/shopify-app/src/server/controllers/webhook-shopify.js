@@ -226,7 +226,7 @@ export default {
           status: 'processing'
         })
         console.log('e')
-        console.log(url)
+        console.log('url', url)
         const response = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(order_Teezily),
