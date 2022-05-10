@@ -118,24 +118,17 @@ export default {
     }
   },
 
-
   async orderShopifyCreated(req, res) {
     console.log(req.body.id)
-
-
     // TODO if there is an in-progress order in DB, return 500
     // TODO if there is completed order in DB, return 200
-
     try {
-      console.log('a')
       const line_items = req.body.line_items[0]
-
       let url_frontdesign = ''
       let style_id = ''
       let color_id = ''
       let prototype_id = ''
       let size_id = ''
-      console.log('b')
       for (let i = 0; i < line_items.properties.length; i++) {
         if (line_items.properties[i].name === '_customily-production-url') {
           url_frontdesign = line_items.properties[i].value
@@ -170,11 +163,9 @@ export default {
           res.sendStatus(StatusCodes.BAD_GATEWAY)
         }
 
-        console.log('c')
         const customer = req.body.customer
         const billing_address = req.body.billing_address
         const shipping_address = req.body.shipping_address
-
         const order_Teezily = {
           email: customer.email,
           first_name: customer.first_name,
@@ -219,14 +210,12 @@ export default {
           } ]
         }
         const url = process.env.POST_ORDER_URL
-        console.log("process.env", process.env)
         // TODO store in-progress order into DB
         const store_order = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id,
           status: 'processing'
         })
-        console.log('e')
-        console.log('url', url)
+
         const response = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(order_Teezily),
@@ -235,7 +224,6 @@ export default {
             Authorization: process.env.TEEZILY_TOKEN
           }
         })
-        console.log('response', response)
 
         if (response.status === 201) {
           const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
@@ -251,7 +239,6 @@ export default {
         // TODO if ng, delete order
 
       }
-
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyCreated: ', error)
