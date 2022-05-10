@@ -192,12 +192,12 @@ export default {
         await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
             teezily_order = response.data.orders[0]
-            console.log("a", teezily_order)
+
           })
           .catch((error) => {
             console.log('error ' + error)
           })
-
+        console.log('teezily_order', teezily_order)
         if (teezily_order.state === 'Done') {
           let line_items_by_fulfillment_order = []
           let  fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '/fulfillment_orders.json'
