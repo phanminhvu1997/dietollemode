@@ -219,7 +219,7 @@ export default {
           } ]
         }
         const url = process.env.POST_ORDER_URL
-        console.log('d')
+        console.log("process.env", process.env)
         // TODO store in-progress order into DB
         const store_order = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id,
