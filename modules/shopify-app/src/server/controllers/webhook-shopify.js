@@ -223,6 +223,7 @@ export default {
           status: 'processing'
         })
         console.log('e')
+
         const response = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(order_Teezily),
@@ -250,7 +251,7 @@ export default {
 
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
-      // console.error('orderShopifyCreated: ', error)
+      console.error('orderShopifyCreated: ', error)
       res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
     }
   },
