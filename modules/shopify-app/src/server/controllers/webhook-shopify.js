@@ -136,7 +136,7 @@ export default {
     // TODO if there is completed order in DB, return 200
 
     try {
-
+      console.log('a')
       const line_items = req.body.line_items[0]
 
       let url_frontdesign = ''
@@ -144,7 +144,7 @@ export default {
       let color_id = ''
       let prototype_id = ''
       let size_id = ''
-
+      console.log('b')
       for (let i = 0; i < line_items.properties.length; i++) {
         if (line_items.properties[i].name === '_customily-production-url') {
           url_frontdesign = line_items.properties[i].value
@@ -167,7 +167,7 @@ export default {
         prototype_id !== '' &&
         size_id !== ''
       ) {
-
+        console.log('c')
         const customer = req.body.customer
         const billing_address = req.body.billing_address
         const shipping_address = req.body.shipping_address
@@ -216,13 +216,13 @@ export default {
           } ]
         }
         const url = process.env.POST_ORDER_URL
-
+        console.log('d')
         // TODO store in-progress order into DB
         const store_order = await OrderTeezilyModel.create({
           shopify_order_id: req.body.id,
           status: 'processing'
         })
-
+        console.log('e')
         const response = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(order_Teezily),
