@@ -1,4 +1,4 @@
-import {StatusCodes} from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes'
 
 import * as config from '../services/constant'
 import ProductShopify from '../infastructure/shopify/ProductShopify'
@@ -50,22 +50,22 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({__store: store})
+      const appModel = new ProductShopify({ __store: store })
 
-      const webhooks = [{topic: 'orders/create', address: '/orders/created'}, {
+      const webhooks = [ { topic: 'orders/create', address: '/orders/created' }, {
         topic: 'orders/updated', address: '/orders/updated'
-      }, {topic: 'products/create', address: '/products/created'}, {
+      }, { topic: 'products/create', address: '/products/created' }, {
         topic: 'products/update', address: '/products/updated'
-      }, {topic: 'products/delete', address: '/products/deleted'}, {
+      }, { topic: 'products/delete', address: '/products/deleted' }, {
         topic: 'customers/create', address: '/customers/created'
-      }, {topic: 'customers/update', address: '/customers/updated'}, {
+      }, { topic: 'customers/update', address: '/customers/updated' }, {
         topic: 'customers/delete', address: '/customers/deleted'
       },
 
       ]
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const {id} of registedWebhooks) {
+      for (const { id } of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -93,11 +93,11 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({__store: store})
+      const appModel = new ProductShopify({ __store: store })
 
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const {id} of registedWebhooks) {
+      for (const { id } of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -110,8 +110,8 @@ export default {
 
   async productShopifyCreated(req, res) {
     try {
-      const productShopify = new ProductShopify({__store: req.__store})
-      await productShopify.updateProducts2Db([req.body])
+      const productShopify = new ProductShopify({ __store: req.__store })
+      await productShopify.updateProducts2Db([ req.body ])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -122,8 +122,8 @@ export default {
 
   async productShopifyUpdated(req, res) {
     try {
-      const productShopify = new ProductShopify({__store: req.__store})
-      await productShopify.updateProducts2Db([req.body])
+      const productShopify = new ProductShopify({ __store: req.__store })
+      await productShopify.updateProducts2Db([ req.body ])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -134,7 +134,7 @@ export default {
 
   async productShopifyDeleted(req, res) {
     try {
-      const productShopify = new ProductShopify({__store: req.__store})
+      const productShopify = new ProductShopify({ __store: req.__store })
       await productShopify.ProductShopifyModel.findOneAndDelete({
         id: req.body.id,
       })
@@ -158,7 +158,8 @@ export default {
       let line_items_data =[]
       for (let line_items of all_line_items) {
         let url_frontdesign = '', style_id = '', color_id = '', prototype_id = '', size_id = ''
-        for (let i = 0; i < line_items.properties.length; i++) {
+
+        for (let i = 0; i < line_items.properties?.length; i++) {
           line_items.properties[i].name === '_customily-production-url' ? url_frontdesign = line_items.properties[i].value : ''
           line_items.properties[i].name === 'style_id' ? style_id = line_items.properties[i].value : ''
           line_items.properties[i].name === 'color_id' ? color_id = line_items.properties[i].value : ''
@@ -181,12 +182,10 @@ export default {
           console.log(order_Teezily)
         }
       }
-      console.log('order_Teezily', order_Teezily)
-
-
+      let OrderDb= []
       // eslint-disable-next-line no-empty
-      if (order_Teezily.line_items.length > 0) {
-        const OrderDb = await OrderTeezilyModel.find({
+      if (order_Teezily.line_items?.length > 0) {
+        OrderDb = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id, status: 'done'
         }).lean()
 
@@ -216,7 +215,7 @@ export default {
 
         if (response.status === 201) {
           const data = await response.json()
-          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({shopify_order_id: req.body.id}, {
+          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
             shopify_order_id: req.body.id,
             status: 'done',
             teezily_order_id: data.orders[0].order_number,
@@ -224,7 +223,7 @@ export default {
           })
           console.log('updateOrder', updateOrder)
         } else {
-          const deleteOrder = await OrderTeezilyModel.deleteOne({shopify_order_id: req.body.id})
+          const deleteOrder = await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id })
           console.log('deleteOrder', deleteOrder)
         }
       }
@@ -242,8 +241,8 @@ export default {
 
   async orderShopifyUpdated(req, res) {
     try {
-      const orderShopify = new OrderShopify({__store: req.__store})
-      await orderShopify.updateOrders2Db([req.body])
+      const orderShopify = new OrderShopify({ __store: req.__store })
+      await orderShopify.updateOrders2Db([ req.body ])
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('orderShopifyUpdated: ', error)
@@ -253,8 +252,8 @@ export default {
 
   async customerShopifyCreated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({__store: req.__store})
-      await customerShopify.updateCustomers2Db([req.body])
+      const customerShopify = new CustomerShopify({ __store: req.__store })
+      await customerShopify.updateCustomers2Db([ req.body ])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -265,8 +264,8 @@ export default {
 
   async customerShopifyUpdated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({__store: req.__store})
-      await customerShopify.updateCustomers2Db([req.body])
+      const customerShopify = new CustomerShopify({ __store: req.__store })
+      await customerShopify.updateCustomers2Db([ req.body ])
 
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -277,7 +276,7 @@ export default {
 
   async customerShopifyDeleted(req, res) {
     try {
-      const customerShopify = new CustomerShopify({__store: req.__store})
+      const customerShopify = new CustomerShopify({ __store: req.__store })
       await customerShopify.CustomerShopifyModel.findOneAndDelete({
         id: req.body.id,
       })

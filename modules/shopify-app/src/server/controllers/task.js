@@ -1,7 +1,7 @@
-import {StatusCodes} from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes'
 
 import bulkUpdate from '../helpers/bulk-update'
-import {Order} from '@shopify/shopify-api/dist/rest-resources/2022-04/index.js'
+import { Order } from '@shopify/shopify-api/dist/rest-resources/2022-04/index.js'
 import {
   RECHARGE_RESOURCE_LIMIT,
   SHOPIFY_RESOURCE_LIMIT,
@@ -33,7 +33,7 @@ export default {
         onUpdateStart: () => {
           console.log('migrating subscription recharge start')
         },
-        onUpdateChunk: ({totalItems}) => {
+        onUpdateChunk: ({ totalItems }) => {
           console.log('migarated ', totalItems, 'subscription recharge')
         },
         onUpdateFinish: () => {
@@ -45,7 +45,7 @@ export default {
           })
           const hasNextPage = newData.length === RECHARGE_RESOURCE_LIMIT
           if (hasNextPage) page += 1
-          return {newData, params: hasNextPage}
+          return { newData, params: hasNextPage }
         },
         handleUpdate: async (newData) => {
           await subscriptionRecharge.updateSubscriptions2Db(newData)
@@ -70,7 +70,7 @@ export default {
         onUpdateStart: () => {
           console.log('migrating order recharge start')
         },
-        onUpdateChunk: ({totalItems}) => {
+        onUpdateChunk: ({ totalItems }) => {
           console.log('migarated ', totalItems, 'order recharge')
         },
         onUpdateFinish: () => {
@@ -82,7 +82,7 @@ export default {
           })
           const hasNextPage = newData.length === RECHARGE_RESOURCE_LIMIT
           if (hasNextPage) page += 1
-          return {newData, params: hasNextPage}
+          return { newData, params: hasNextPage }
         },
         handleUpdate: async (newData) => {
           await orderRecharge.updateOrders2Db(newData)
@@ -110,7 +110,7 @@ export default {
       do {
         const products = await productShopify.getProductsFromShopify(params)
 
-        result = [...result, ...products]
+        result = [ ...result, ...products ]
 
         params = products.nextPageParameters
       } while (params !== undefined)
@@ -165,7 +165,7 @@ export default {
       do {
         const orders = await orderShopify.getOrdersFromShopify(params)
 
-        result = [...result, ...orders]
+        result = [ ...result, ...orders ]
 
         params = orders.nextPageParameters
       } while (params !== undefined)
@@ -191,7 +191,7 @@ export default {
       for (let i = 0; i < Order_Unfullfilled_Db.length; i++) {
         const teezily_url = 'https://plus.teezily.com/api/v1/orders/' + Order_Unfullfilled_Db[i].teezily_order_id + '.json'
 
-        await axios.get(teezily_url, {headers: {Authorization: Teezily_token}})
+        await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
           .then(response => {
             teezily_order = response.data.orders[0]
           })
@@ -203,7 +203,7 @@ export default {
 
           let fulfillment_order_line_items = []
 
-          const shopify_order = await axios.get(shopify_order_url, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+          const shopify_order = await axios.get(shopify_order_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
             .then(response => {
               response.data.line_items.forEach(line_item => {
                 let style_id = '', color_id = '', prototype_id = '', size_id = ''
@@ -224,11 +224,11 @@ export default {
 
           let line_items_by_fulfillment_order = []
           let fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '/fulfillment_orders.json'
-          const fulfillment_orders_call = await axios.get(fulfillment_orders_url, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+          const fulfillment_orders_call = await axios.get(fulfillment_orders_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
             .then(response => {
               line_items_by_fulfillment_order.push({
                 'fulfillment_order_id': response.data.fulfillment_orders[0].id,
-                'fulfillment_order_line_items': fulfillment_order_line_items
+                fulfillment_order_line_items
               })
             })
 
@@ -239,7 +239,7 @@ export default {
             }
           }
           const fulfillments_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/fulfillments.json'
-          axios.post(fulfillments_url, fulfillment, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+          axios.post(fulfillments_url, fulfillment, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
             // eslint-disable-next-line promise/always-return
             .then((res) => {
               console.log('RESPONSE RECEIVED: ', res)
@@ -248,7 +248,7 @@ export default {
               console.log('AXIOS ERROR: ', err)
             })
         }
-        const updateOrder = await OrderTeezilyModel.findOneAndUpdate({shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id}, {
+        const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id }, {
           order_status: 'fullfiled'
         })
       }
