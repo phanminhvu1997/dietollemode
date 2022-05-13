@@ -182,6 +182,7 @@ export default {
           console.log(order_Teezily)
         }
       }
+
       let OrderDb= []
       // eslint-disable-next-line no-empty
       if (order_Teezily.line_items?.length > 0) {
@@ -191,7 +192,7 @@ export default {
 
         if (OrderDb.length > 0) {
           res.sendStatus(StatusCodes.OK)
-          ''
+          return ''
         } else {
           res.sendStatus(StatusCodes.BAD_GATEWAY)
         }
