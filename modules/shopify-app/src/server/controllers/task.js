@@ -198,7 +198,6 @@ export default {
           .catch((error) => {
             console.log('error ' + error)
           })
-        console.log('teezily_order', teezily_order)
         if (teezily_order.state === 'Done') {
           const shopify_order_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '.json'
 
