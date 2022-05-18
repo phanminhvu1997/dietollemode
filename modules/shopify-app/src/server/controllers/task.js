@@ -247,10 +247,10 @@ export default {
             .catch((err) => {
               console.log('AXIOS ERROR: ', err)
             })
+          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id }, {
+            order_status: 'fullfiled'
+          })
         }
-        const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id }, {
-          order_status: 'fullfiled'
-        })
       }
 
       res.json('Successfully')
