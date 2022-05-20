@@ -10,12 +10,12 @@ import CustomerShopify from '../infastructure/shopify/CustomerShopify'
 import fetch from 'node-fetch'
 
 
-function formatRequestTeezily(data, customer, billing_address, shipping_address, shopifyOrderID) {
+function formatRequestTeezily(data, customer, billing_address, shipping_address, shopifyOrderName) {
   const order_Teezily = {
     email: customer.email,
     first_name: customer.first_name,
     last_name: customer.last_name,
-    order_seller_id: shopifyOrderID,
+    order_seller_id: shopifyOrderName,
     shipping_address: {
       address: shipping_address.city,
       zipcode: shipping_address.zip,
@@ -159,40 +159,38 @@ export default {
       for (let line_items of all_line_items) {
         let url_frontdesign = '', style_id = '', color_id = '', prototype_id = '', size_id = ''
 
-        for (let i = 0; i < line_items.properties?.length; i++) {
+        for (let i = 0; i < line_items.properties.length; i++) {
           line_items.properties[i].name === '_customily-production-url' ? url_frontdesign = line_items.properties[i].value : ''
           line_items.properties[i].name === 'style_id' ? style_id = line_items.properties[i].value : ''
           line_items.properties[i].name === 'color_id' ? color_id = line_items.properties[i].value : ''
           line_items.properties[i].name === 'prototype_id' ? prototype_id = line_items.properties[i].value : ''
           line_items.properties[i].name === 'size_id' ? size_id = line_items.properties[i].value : ''
         }
-
         if (style_id !== '' && color_id !== '' && prototype_id !== '' && size_id !== '') {
           line_items_data.push({
+            text_personalisations: [ { value: line_items.id } ],
             prototype_id, color_id, size_id, style_id, quantity: line_items.quantity, product: {
               name: line_items.name, style_id, front_design: {
                 remote_picture_url: url_frontdesign, position_x: 0, position_y: 0, width: 100, height: 100
               }
             }
           })
-          const customer = req.body.customer
-          const billing_address = req.body.billing_address
-          const shipping_address = req.body.shipping_address
-          order_Teezily = formatRequestTeezily(line_items_data, customer, billing_address, shipping_address, req.body.id)
-          console.log(order_Teezily)
         }
       }
+      const customer = req.body.customer
+      const billing_address = req.body.billing_address
+      const shipping_address = req.body.shipping_address
+      order_Teezily = formatRequestTeezily(line_items_data, customer, billing_address, shipping_address, req.body.name)
 
       let OrderDb= []
       // eslint-disable-next-line no-empty
+
       if (order_Teezily.line_items?.length > 0) {
         OrderDb = await OrderTeezilyModel.find({
           shopify_order_id: req.body.id, status: 'done'
         }).lean()
-
         if (OrderDb.length > 0) {
           res.sendStatus(StatusCodes.OK)
-          return ''
         } else {
           res.sendStatus(StatusCodes.BAD_GATEWAY)
         }
@@ -203,18 +201,15 @@ export default {
           shopify_order_id: req.body.id, status: 'processing', teezily_order_id: '', order_status: 'unfullfiled'
         })
         const url = process.env.POST_ORDER_URL
+
         const response = await fetch(url, {
           method: 'POST', body: JSON.stringify(order_Teezily), headers: {
             'Content-Type': 'application/json', Authorization: process.env.TEEZILY_TOKEN
           }
         })
+
         console.log(response)
         if (response.ok) {
-          const data = await response.json()
-          console.log('response', data)
-        }
-
-        if (response.status === 201) {
           const data = await response.json()
           const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
             shopify_order_id: req.body.id,
@@ -222,7 +217,7 @@ export default {
             teezily_order_id: data.orders[0].order_number,
             order_status: 'unfullfiled'
           })
-          console.log('updateOrder', updateOrder)
+          console.log('response', data)
         } else {
           const deleteOrder = await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id })
           console.log('deleteOrder', deleteOrder)

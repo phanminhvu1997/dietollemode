@@ -1,7 +1,7 @@
-import { StatusCodes } from 'http-status-codes'
+import {StatusCodes} from 'http-status-codes'
 
 import bulkUpdate from '../helpers/bulk-update'
-import { Order } from '@shopify/shopify-api/dist/rest-resources/2022-04/index.js'
+import {Order} from '@shopify/shopify-api/dist/rest-resources/2022-04/index.js'
 import {
   RECHARGE_RESOURCE_LIMIT,
   SHOPIFY_RESOURCE_LIMIT,
@@ -33,7 +33,7 @@ export default {
         onUpdateStart: () => {
           console.log('migrating subscription recharge start')
         },
-        onUpdateChunk: ({ totalItems }) => {
+        onUpdateChunk: ({totalItems}) => {
           console.log('migarated ', totalItems, 'subscription recharge')
         },
         onUpdateFinish: () => {
@@ -45,7 +45,7 @@ export default {
           })
           const hasNextPage = newData.length === RECHARGE_RESOURCE_LIMIT
           if (hasNextPage) page += 1
-          return { newData, params: hasNextPage }
+          return {newData, params: hasNextPage}
         },
         handleUpdate: async (newData) => {
           await subscriptionRecharge.updateSubscriptions2Db(newData)
@@ -70,7 +70,7 @@ export default {
         onUpdateStart: () => {
           console.log('migrating order recharge start')
         },
-        onUpdateChunk: ({ totalItems }) => {
+        onUpdateChunk: ({totalItems}) => {
           console.log('migarated ', totalItems, 'order recharge')
         },
         onUpdateFinish: () => {
@@ -82,7 +82,7 @@ export default {
           })
           const hasNextPage = newData.length === RECHARGE_RESOURCE_LIMIT
           if (hasNextPage) page += 1
-          return { newData, params: hasNextPage }
+          return {newData, params: hasNextPage}
         },
         handleUpdate: async (newData) => {
           await orderRecharge.updateOrders2Db(newData)
@@ -110,7 +110,7 @@ export default {
       do {
         const products = await productShopify.getProductsFromShopify(params)
 
-        result = [ ...result, ...products ]
+        result = [...result, ...products]
 
         params = products.nextPageParameters
       } while (params !== undefined)
@@ -165,7 +165,7 @@ export default {
       do {
         const orders = await orderShopify.getOrdersFromShopify(params)
 
-        result = [ ...result, ...orders ]
+        result = [...result, ...orders]
 
         params = orders.nextPageParameters
       } while (params !== undefined)
@@ -180,76 +180,103 @@ export default {
 
   async updateOrderStatus(req, res) {
     try {
+      console.log('aaaaaaaaaaaaaa')
       let teezily_order = []
       const Teezily_token = process.env.TEEZILY_TOKEN
       const Shopify_token = process.env.SHOPIFY_ACCESS_TOKEN
-
       const Order_Unfullfilled_Db = await OrderTeezilyModel.find({
         order_status: 'unfullfiled'
       }).lean()
+      console.log('aaaaaaaaaaaaaa', Order_Unfullfilled_Db)
+      for (let i = 0; i < Order_Unfullfilled_Db?.length; i++) {
+        const teezilyOrderId = Order_Unfullfilled_Db[i].teezily_order_id
+        const shopifyOrderID = Order_Unfullfilled_Db[i].shopify_order_id
 
-      for (let i = 0; i < Order_Unfullfilled_Db.length; i++) {
-        const teezily_url = 'https://plus.teezily.com/api/v1/orders/' + Order_Unfullfilled_Db[i].teezily_order_id + '.json'
+        const teezily_url = 'https://plus.teezily.com/api/v1/orders/' + teezilyOrderId + '.json'
+        const shopify_order_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + shopifyOrderID + '.json'
+        let fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + shopifyOrderID + '/fulfillment_orders.json'
+        const fulfillments_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/fulfillments.json'
 
-        await axios.get(teezily_url, { headers: { Authorization: Teezily_token } })
+
+        await axios.get(teezily_url, {headers: {Authorization: Teezily_token}})
           .then(response => {
+
             teezily_order = response.data.orders[0]
           })
           .catch((error) => {
             console.log('error ' + error)
           })
-        if (teezily_order.state === 'Done') {
-          const shopify_order_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '.json'
+        let shopify_order = {}
+        await axios.get(shopify_order_url, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+          .then(response => {
+            shopify_order = response.data
+          })
 
-          let fulfillment_order_line_items = []
+        let fulfillment_order_id = ''
+        const fulfillment_orders_call = await axios.get(fulfillment_orders_url, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+          .then(response => {
+            fulfillment_order_id = response.data.fulfillment_orders[0].id
+          })
 
-          const shopify_order = await axios.get(shopify_order_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
-            .then(response => {
-              response.data.line_items.forEach(line_item => {
+
+        const teezilyTracking = teezily_order.tracking_number
+        console.log('teezilyTracking', teezily_order)
+        if (teezilyTracking.length > 0) {
+          for (let n = 0; n < teezilyTracking.length; i++) {
+            for (let m = 0; m < shopify_order.line_items.length; m++) {
+              if (teezily_order.line_items[n].text_personalisations[0].values === shopify_order.line_items[m].id && shopify_order.line_items[m].fulfillment_status !== 'fulfilled') {
+                let line_items_by_fulfillment_order = []
                 let style_id = '', color_id = '', prototype_id = '', size_id = ''
-                for (let i = 0; i < line_item.properties.length; i++) {
-                  line_items.properties[i].name === 'style_id' ? style_id = line_item.properties[i].value : ''
-                  line_items.properties[i].name === 'color_id' ? color_id = line_item.properties[i].value : ''
-                  line_items.properties[i].name === 'prototype_id' ? prototype_id = line_item.properties[i].value : ''
-                  line_items.properties[i].name === 'size_id' ? size_id = line_item.properties[i].value : ''
-                }
+                shopify_order.line_items[m].properties.forEach(properties => {
+                  properties.name === 'style_id' ? style_id = properties.value : ''
+                  properties.name === 'color_id' ? color_id = properties.value : ''
+                  properties.name === 'prototype_id' ? prototype_id = properties.value : ''
+                  properties.name === 'size_id' ? size_id = properties.value : ''
+                })
+                let fulfillment_order_line_items = []
                 if (style_id !== '' && color_id !== '' && prototype_id !== '' && size_id !== '') {
                   fulfillment_order_line_items.push({
-                    'id': line_item.id,
-                    'quantity': line_item.quantity
+                    'id': shopify_order.line_items[m].id,
+                    'quantity': shopify_order.line_items[m].quantity
                   })
                 }
-              })
-            })
+                line_items_by_fulfillment_order.push({
+                  'fulfillment_order_id': fulfillment_order_id,
+                  fulfillment_order_line_items
+                })
+                const fulfillment = {
+                  'fulfillment': {
+                    'notify_customer': false,
+                    'tracking_info': {
+                      'url': teezilyTracking[n].tracking_url,
+                      'company': teezilyTracking[n].carrier,
+                      'number': teezilyTracking[n].tracking_number
+                    },
+                    line_items_by_fulfillment_order
+                  }
+                }
+                axios.post(fulfillments_url, fulfillment, {headers: {'X-Shopify-Access-Token': Shopify_token}})
+                  // eslint-disable-next-line promise/always-return
+                  .then((res) => {
+                    console.log('RESPONSE RECEIVED: ', res)
+                  })
+                  .catch((err) => {
+                    console.log('AXIOS ERROR: ', err)
+                  })
+                let fulfillment_status = ''
+                await axios.get(shopify_order_url, { headers: { 'X-Shopify-Access-Token': Shopify_token}})
+                  .then(response => {
+                    fulfillment_status = response.data.fulfillment_status
+                  })
 
-          let line_items_by_fulfillment_order = []
-          let fulfillment_orders_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + teezily_order.order_seller_id + '/fulfillment_orders.json'
-          const fulfillment_orders_call = await axios.get(fulfillment_orders_url, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
-            .then(response => {
-              line_items_by_fulfillment_order.push({
-                'fulfillment_order_id': response.data.fulfillment_orders[0].id,
-                fulfillment_order_line_items
-              })
-            })
-
-          const fulfillment = {
-            'fulfillment': {
-              'notify_customer': false,
-              line_items_by_fulfillment_order
+                if (fulfillment_status === 'fulfilled') {
+                  await OrderTeezilyModel.findOneAndUpdate({shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id}, {
+                    order_status: 'fullfiled'
+                  })
+                }
+              }
             }
           }
-          const fulfillments_url = 'https://dietollemode.myshopify.com/admin/api/2022-04/fulfillments.json'
-          axios.post(fulfillments_url, fulfillment, { headers: { 'X-Shopify-Access-Token': Shopify_token } })
-            // eslint-disable-next-line promise/always-return
-            .then((res) => {
-              console.log('RESPONSE RECEIVED: ', res)
-            })
-            .catch((err) => {
-              console.log('AXIOS ERROR: ', err)
-            })
-          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: Order_Unfullfilled_Db[i].shopify_order_id }, {
-            order_status: 'fullfiled'
-          })
         }
       }
 
