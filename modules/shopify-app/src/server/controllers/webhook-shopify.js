@@ -1,4 +1,4 @@
-import { StatusCodes } from 'http-status-codes'
+import {StatusCodes} from 'http-status-codes'
 
 import * as config from '../services/constant'
 import ProductShopify from '../infastructure/shopify/ProductShopify'
@@ -50,22 +50,22 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({ __store: store })
+      const appModel = new ProductShopify({__store: store})
 
-      const webhooks = [ { topic: 'orders/create', address: '/orders/created' }, {
+      const webhooks = [{topic: 'orders/create', address: '/orders/created'}, {
         topic: 'orders/updated', address: '/orders/updated'
-      }, { topic: 'products/create', address: '/products/created' }, {
+      }, {topic: 'products/create', address: '/products/created'}, {
         topic: 'products/update', address: '/products/updated'
-      }, { topic: 'products/delete', address: '/products/deleted' }, {
+      }, {topic: 'products/delete', address: '/products/deleted'}, {
         topic: 'customers/create', address: '/customers/created'
-      }, { topic: 'customers/update', address: '/customers/updated' }, {
+      }, {topic: 'customers/update', address: '/customers/updated'}, {
         topic: 'customers/delete', address: '/customers/deleted'
       },
 
       ]
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const { id } of registedWebhooks) {
+      for (const {id} of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -93,11 +93,11 @@ export default {
       })
         .lean()
         .exec()
-      const appModel = new ProductShopify({ __store: store })
+      const appModel = new ProductShopify({__store: store})
 
       const registedWebhooks = await appModel.shopifyClient.webhook.list()
 
-      for (const { id } of registedWebhooks) {
+      for (const {id} of registedWebhooks) {
         await appModel.shopifyClient.webhook.delete(id)
       }
 
@@ -110,8 +110,8 @@ export default {
 
   async productShopifyCreated(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
-      await productShopify.updateProducts2Db([ req.body ])
+      const productShopify = new ProductShopify({__store: req.__store})
+      await productShopify.updateProducts2Db([req.body])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -122,8 +122,8 @@ export default {
 
   async productShopifyUpdated(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
-      await productShopify.updateProducts2Db([ req.body ])
+      const productShopify = new ProductShopify({__store: req.__store})
+      await productShopify.updateProducts2Db([req.body])
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
       console.error('productShopifyUpdated: ', error)
@@ -133,7 +133,7 @@ export default {
 
   async productShopifyDeleted(req, res) {
     try {
-      const productShopify = new ProductShopify({ __store: req.__store })
+      const productShopify = new ProductShopify({__store: req.__store})
       await productShopify.ProductShopifyModel.findOneAndDelete({
         id: req.body.id,
       })
@@ -150,102 +150,102 @@ export default {
   async orderShopifyCreated(req, res) {
     // TODO if there is an in-progress order in DB, return 500
     // TODO if there is completed order in DB, return 200
-    try {
-      // const all_line_items = req.body.line_items
-      const all_line_items = req.body.line_items
-      let order_Teezily = {}
-      let line_items_data =[]
-      for (let line_items of all_line_items) {
-        let url_frontdesign = '', style_id = '', color_id = '', prototype_id = '', size_id = ''
 
-        for (let i = 0; i < line_items.properties.length; i++) {
-          line_items.properties[i].name === '_customily-production-url' ? url_frontdesign = line_items.properties[i].value : ''
-          line_items.properties[i].name === 'style_id' ? style_id = line_items.properties[i].value : ''
-          line_items.properties[i].name === 'color_id' ? color_id = line_items.properties[i].value : ''
-          line_items.properties[i].name === 'prototype_id' ? prototype_id = line_items.properties[i].value : ''
-          line_items.properties[i].name === 'size_id' ? size_id = line_items.properties[i].value : ''
-        }
-        if (style_id !== '' && color_id !== '' && prototype_id !== '' && size_id !== '') {
-          line_items_data.push({
-            text_personalisations: [ { value: line_items.id } ],
-            prototype_id, color_id, size_id, style_id, quantity: line_items.quantity, product: {
-              name: line_items.name, style_id, front_design: {
-                remote_picture_url: url_frontdesign, position_x: 0, position_y: 0, width: 100, height: 100
-              }
-            }
-          })
-        }
+    // const all_line_items = req.body.line_items
+    const all_line_items = req.body.line_items
+    let order_Teezily = {}
+    let line_items_data = []
+    for (let line_items of all_line_items) {
+      let url_frontdesign = '', style_id = '', color_id = '', prototype_id = '', size_id = ''
+
+      for (let i = 0; i < line_items.properties.length; i++) {
+        line_items.properties[i].name === '_customily-production-url' ? url_frontdesign = line_items.properties[i].value : ''
+        line_items.properties[i].name === 'style_id' ? style_id = line_items.properties[i].value : ''
+        line_items.properties[i].name === 'color_id' ? color_id = line_items.properties[i].value : ''
+        line_items.properties[i].name === 'prototype_id' ? prototype_id = line_items.properties[i].value : ''
+        line_items.properties[i].name === 'size_id' ? size_id = line_items.properties[i].value : ''
       }
-
-      const customer = req.body.customer
-      const billing_address = req.body.billing_address
-      const shipping_address = req.body.shipping_address
-      order_Teezily = formatRequestTeezily(line_items_data, customer, billing_address, shipping_address, req.body.name)
-
-      let OrderDb= []
-      // eslint-disable-next-line no-empty
-
-      if (order_Teezily.line_items?.length > 0) {
-        OrderDb = await OrderTeezilyModel.find({
-          shopify_order_id: req.body.id, status: 'done'
-        }).lean()
-        if (OrderDb.length > 0) {
-          res.sendStatus(StatusCodes.OK)
-        } else {
-          // TODO store in-progress order into DB
-          const store_order = await OrderTeezilyModel.create({
-            shopify_order_id: req.body.id, status: 'processing', teezily_order_id: '', order_status: 'unfullfiled'
-          })
-          const url = process.env.POST_ORDER_URL
-          console.log(JSON.stringify(order_Teezily))
-          const response = await fetch(url, {
-            method: 'POST', body: JSON.stringify(order_Teezily), headers: {
-              'Content-Type': 'application/json', Authorization: process.env.TEEZILY_TOKEN
+      if (style_id !== '' && color_id !== '' && prototype_id !== '' && size_id !== '') {
+        line_items_data.push({
+          text_personalisations: [{value: line_items.id}],
+          prototype_id, color_id, size_id, style_id, quantity: line_items.quantity, product: {
+            name: line_items.name, style_id, front_design: {
+              remote_picture_url: url_frontdesign, position_x: 0, position_y: 0, width: 100, height: 100
             }
-          })
-          console.log(response)
-          if (response.ok) {
-            const data = await response.json()
-            const teezilyOrderNumber = data.orders[0].order_number
-            console.log('response', data)
-            const updateOrder = await OrderTeezilyModel.findOneAndUpdate({ shopify_order_id: req.body.id }, {
-              shopify_order_id: req.body.id,
-              status: 'done',
-              teezily_order_id: teezilyOrderNumber,
-              order_status: 'unfullfiled'
-            })
-            console.log('updateOrder', updateOrder)
-          } else {
-            console.log(response.status)
-            let tag = {}
-            response.status === 500 ? tag = { 'order': { 'tags': 'errors', 'note' : 'Customily could not generate image' } } :
-              response.status === 400 ? tag = { 'order': { 'tags': 'errors', 'note' : 'Wrong MetaField' } } : ''
-            const url_err = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/'+req.body.id+'.json'
-            const send_rr = await fetch(url_err, {
-              method: 'PUT', body: JSON.stringify(tag), headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN, 'Content-Type': 'application/json' }
-            })
-            console.log('send_rr', send_rr)
-            const deleteOrder = await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id })
-            console.log('deleteOrder', deleteOrder)
-            return ''
-            // eslint-disable-next-line no-unreachable
-            res.sendStatus(StatusCodes.OK)
-
           }
+        })
+      }
+    }
+
+    const customer = req.body.customer
+    const billing_address = req.body.billing_address
+    const shipping_address = req.body.shipping_address
+    order_Teezily = formatRequestTeezily(line_items_data, customer, billing_address, shipping_address, req.body.name)
+
+    let OrderDb = []
+    // eslint-disable-next-line no-empty
+
+    if (order_Teezily.line_items?.length > 0) {
+      OrderDb = await OrderTeezilyModel.find({
+        shopify_order_id: req.body.id, status: 'done'
+      }).lean()
+      if (OrderDb.length > 0) {
+        res.sendStatus(StatusCodes.OK)
+      } else {
+        // TODO store in-progress order into DB
+        const store_order = await OrderTeezilyModel.create({
+          shopify_order_id: req.body.id, status: 'processing', teezily_order_id: '', order_status: 'unfullfiled'
+        })
+        const url = process.env.POST_ORDER_URL
+        console.log(JSON.stringify(order_Teezily))
+        const response = await fetch(url, {
+          method: 'POST', body: JSON.stringify(order_Teezily), headers: {
+            'Content-Type': 'application/json', Authorization: process.env.TEEZILY_TOKEN
+          }
+        })
+        console.log(response)
+        if (response.ok) {
+          const data = await response.json()
+          const teezilyOrderNumber = data.orders[0].order_number
+          console.log('response', data)
+          const updateOrder = await OrderTeezilyModel.findOneAndUpdate({shopify_order_id: req.body.id}, {
+            shopify_order_id: req.body.id,
+            status: 'done',
+            teezily_order_id: teezilyOrderNumber,
+            order_status: 'unfullfiled'
+          })
+          console.log('updateOrder', updateOrder)
+        } else {
+          console.log(response.status)
+          let tag = {}
+          response.status === 500 ? tag = {'order': {'tags': 'errors', 'note': 'Customily could not generate image'}} :
+            response.status === 400 ? tag = {'order': {'tags': 'errors', 'note': 'Wrong MetaField'}} : ''
+          const url_err = 'https://dietollemode.myshopify.com/admin/api/2022-04/orders/' + req.body.id + '.json'
+          const send_rr = await fetch(url_err, {
+            method: 'PUT',
+            body: JSON.stringify(tag),
+            headers: {'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN, 'Content-Type': 'application/json'}
+          })
+          console.log('send_rr', send_rr)
+          const deleteOrder = await OrderTeezilyModel.deleteOne({shopify_order_id: req.body.id})
+          console.log('deleteOrder', deleteOrder)
+          return ''
+          // eslint-disable-next-line no-unreachable
+          res.sendStatus(StatusCodes.OK)
+
         }
       }
-      // TODO if ok, update the in-progress order to completed
-      // TODO if ng, delete order
-      // res.sendStatus(StatusCodes.OK)
-    } catch (error) {
-      //res.sendStatus(StatusCodes.SERVICE_UNAVAILABLE)
     }
+    // TODO if ok, update the in-progress order to completed
+    // TODO if ng, delete order
+    // res.sendStatus(StatusCodes.OK)
+
   },
 
   async orderShopifyUpdated(req, res) {
     try {
-      const orderShopify = new OrderShopify({ __store: req.__store })
-      await orderShopify.updateOrders2Db([ req.body ])
+      const orderShopify = new OrderShopify({__store: req.__store})
+      await orderShopify.updateOrders2Db([req.body])
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
 
@@ -256,8 +256,8 @@ export default {
 
   async customerShopifyCreated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
-      await customerShopify.updateCustomers2Db([ req.body ])
+      const customerShopify = new CustomerShopify({__store: req.__store})
+      await customerShopify.updateCustomers2Db([req.body])
 
       res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -268,8 +268,8 @@ export default {
 
   async customerShopifyUpdated(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
-      await customerShopify.updateCustomers2Db([ req.body ])
+      const customerShopify = new CustomerShopify({__store: req.__store})
+      await customerShopify.updateCustomers2Db([req.body])
 
       // res.sendStatus(StatusCodes.OK)
     } catch (error) {
@@ -280,7 +280,7 @@ export default {
 
   async customerShopifyDeleted(req, res) {
     try {
-      const customerShopify = new CustomerShopify({ __store: req.__store })
+      const customerShopify = new CustomerShopify({__store: req.__store})
       await customerShopify.CustomerShopifyModel.findOneAndDelete({
         id: req.body.id,
       })
