@@ -227,12 +227,14 @@ export default {
             console.log('send_rr', send_rr)
             const deleteOrder = await OrderTeezilyModel.deleteOne({ shopify_order_id: req.body.id })
             console.log('deleteOrder', deleteOrder)
-            return ''
             // eslint-disable-next-line no-unreachable
             res.sendStatus(StatusCodes.OK)
 
           }
         }
+      }else {
+        // eslint-disable-next-line no-unreachable
+        res.sendStatus(StatusCodes.OK)
       }
       // TODO if ok, update the in-progress order to completed
       // TODO if ng, delete order
